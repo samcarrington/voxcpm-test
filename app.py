@@ -23,8 +23,11 @@ Usage:
 
 import argparse
 import os
+import shutil
+import subprocess
 import sys
 import time
+from datetime import datetime
 from pathlib import Path
 
 import numpy as np
@@ -43,19 +46,130 @@ DEFAULT_STEPS = 20
 STREAMING_STEPS = 12
 
 
+def detect_nvidia_gpus() -> list[str]:
+    """Return NVIDIA GPU names from nvidia-smi when available."""
+    if shutil.which("nvidia-smi") is None:
+        return []
+
+    try:
+        result = subprocess.run(
+            ["nvidia-smi", "--query-gpu=name", "--format=csv,noheader"],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+    except Exception:
+        return []
+
+    return [line.strip() for line in result.stdout.splitlines() if line.strip()]
+
+
+def print_cuda_diagnosis() -> None:
+    """Print actionable hints when CUDA is expected but unavailable."""
+    import torch
+
+    if torch.cuda.is_available():
+        return
+
+    nvidia = detect_nvidia_gpus()
+    if not nvidia:
+        return
+
+    torch_version = torch.__version__
+    print("\nCUDA diagnosis:")
+    print(f"- NVIDIA GPU(s) detected: {', '.join(nvidia)}")
+    print(f"- Installed torch build: {torch_version}")
+
+    if "+cpu" in torch_version:
+        print("- This is a CPU-only PyTorch build, so CUDA cannot be used.")
+    else:
+        print("- CUDA runtime is unavailable to this PyTorch install.")
+
+    print("- Fix: install a CUDA-enabled PyTorch wheel in this venv, then rerun --info.")
+    print("- Example (Windows, pip):")
+    print("    py -3 -m pip uninstall -y torch torchvision torchaudio")
+    print("    py -3 -m pip install --index-url https://download.pytorch.org/whl/cu128 torch torchvision torchaudio")
+
+
 def ensure_output_dir():
     OUTPUT_DIR.mkdir(exist_ok=True)
+
+
+def make_unique_output_path(filename: str) -> Path:
+    """Create a unique output filename with timestamp + collision fallback."""
+    ensure_output_dir()
+
+    original = Path(filename)
+    stem = original.stem
+    suffix = original.suffix or ".wav"
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+
+    candidate = OUTPUT_DIR / f"{stem}_{timestamp}{suffix}"
+    if not candidate.exists():
+        return candidate
+
+    for i in range(1, 1000):
+        candidate = OUTPUT_DIR / f"{stem}_{timestamp}_{i:03d}{suffix}"
+        if not candidate.exists():
+            return candidate
+
+    raise RuntimeError("Could not allocate a unique output filename")
 
 
 def detect_device() -> str:
     """Pick the best available device: cuda > mps > cpu."""
     import torch
 
-    if torch.cuda.is_available():
-        return "cuda"
-    if torch.backends.mps.is_available():
+    if torch.cuda.is_available() and torch.cuda.device_count() > 0:
+        # Validate CUDA with a tiny allocation so we fail fast on bad driver/runtime.
+        try:
+            _ = torch.zeros(1, device="cuda")
+            return "cuda"
+        except Exception as exc:
+            print(f"Warning: CUDA detected but unusable ({exc}); falling back")
+
+    if hasattr(torch.backends, "mps") and torch.backends.mps.is_available():
         return "mps"
     return "cpu"
+
+
+def get_runtime_device(model) -> str:
+    """Best-effort extraction of the model runtime device string."""
+    runtime = getattr(getattr(model, "tts_model", None), "device", None)
+    if runtime is not None:
+        return str(runtime)
+
+    tts_model = getattr(model, "tts_model", None)
+    if tts_model is not None and hasattr(tts_model, "parameters"):
+        try:
+            return str(next(tts_model.parameters()).device)
+        except Exception:
+            pass
+
+    if hasattr(model, "parameters"):
+        try:
+            return str(next(model.parameters()).device)
+        except Exception:
+            pass
+
+    return "unknown"
+
+
+def ensure_model_device(model, target_device: str) -> None:
+    """Best-effort model placement for frameworks that expose .to(...)."""
+    if target_device not in ("cuda", "mps", "cpu"):
+        return
+
+    for candidate in (model, getattr(model, "tts_model", None)):
+        if candidate is None:
+            continue
+        to_method = getattr(candidate, "to", None)
+        if callable(to_method):
+            try:
+                to_method(target_device)
+            except Exception:
+                # Some wrappers expose .to but don't support direct placement.
+                pass
 
 
 def load_model(load_denoiser: bool = False):
@@ -83,7 +197,14 @@ def load_model(load_denoiser: bool = False):
         load_denoiser=load_denoiser,
     )
 
-    effective_device = getattr(model.tts_model, "device", "unknown")
+    effective_device = get_runtime_device(model)
+
+    # If CUDA is available but the model remained on CPU, force placement.
+    if device == "cuda" and "cuda" not in effective_device:
+        print("Detected CUDA but model is not on CUDA; attempting to move model...")
+        ensure_model_device(model, "cuda")
+        effective_device = get_runtime_device(model)
+        print(f"Runtime device after move attempt: {effective_device}")
 
     elapsed = time.perf_counter() - t0
     print(f"Model loaded in {elapsed:.1f}s (runtime device={effective_device})")
@@ -92,8 +213,7 @@ def load_model(load_denoiser: bool = False):
 
 def save_wav(wav: np.ndarray, filename: str, sample_rate: int = 48000):
     """Save a numpy waveform to a WAV file in the output directory."""
-    ensure_output_dir()
-    path = OUTPUT_DIR / filename
+    path = make_unique_output_path(filename)
     sf.write(str(path), wav, sample_rate)
     duration = len(wav) / sample_rate
     print(f"Saved: {path}  ({duration:.2f}s, {sample_rate}Hz)")
@@ -193,14 +313,14 @@ def demo_voice_design(
 
     voices = [
         {
-            "description": "Calm English female voice",
+            "description": "Happy British female voice, expressive and clear, urban London accent",
             "text": text
-            or "The Punters' Club; Good music from tolerable hosts, with disco shoulders and glittery jackets. Join us for a boogie.",
+            or "Welcome to The Punters' Club on Radio Waters. Get your disco shoulders ready.",
         },
         {
-            "description": "Calm English male voice",
+            "description": "Excited English male voice, urban British Midlands Accent",
             "text": text
-            or "Have you got a disco leg and a desire to shake it? You're in the Punters' Club, on Radio Waters",
+            or "Filling your ears and moving your legs. You're in the Punters' Club, on Radio Waters",
         },
     ]
 
@@ -336,8 +456,13 @@ def show_info():
     print(f"Python:     {sys.version}")
     print(f"PyTorch:    {torch.__version__}")
     print(f"CUDA:       {torch.cuda.is_available()} ({torch.version.cuda or 'N/A'})")
+    if torch.cuda.is_available() and torch.cuda.device_count() > 0:
+        for i in range(torch.cuda.device_count()):
+            name = torch.cuda.get_device_name(i)
+            print(f"CUDA GPU {i}: {name}")
     print(f"MPS:        {torch.backends.mps.is_available()}")
     print(f"Device:     {detect_device()}")
+    print_cuda_diagnosis()
 
     try:
         from importlib.metadata import version
@@ -456,6 +581,8 @@ def main():
     if args.info:
         show_info()
         return
+
+    print_cuda_diagnosis()
 
     if args.seed is not None:
         import torch
