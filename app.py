@@ -22,6 +22,7 @@ Usage:
 """
 
 import argparse
+import json
 import os
 import shutil
 import subprocess
@@ -85,10 +86,14 @@ def print_cuda_diagnosis() -> None:
     else:
         print("- CUDA runtime is unavailable to this PyTorch install.")
 
-    print("- Fix: install a CUDA-enabled PyTorch wheel in this venv, then rerun --info.")
+    print(
+        "- Fix: install a CUDA-enabled PyTorch wheel in this venv, then rerun --info."
+    )
     print("- Example (Windows, pip):")
     print("    py -3 -m pip uninstall -y torch torchvision torchaudio")
-    print("    py -3 -m pip install --index-url https://download.pytorch.org/whl/cu128 torch torchvision torchaudio")
+    print(
+        "    py -3 -m pip install --index-url https://download.pytorch.org/whl/cu128 torch torchvision torchaudio"
+    )
 
 
 def ensure_output_dir():
@@ -180,6 +185,7 @@ def load_model(load_denoiser: bool = False):
     is unavailable. We only use device detection to decide whether
     torch.compile optimization is safe to enable.
     """
+    from huggingface_hub import snapshot_download
     from voxcpm import VoxCPM
 
     device = detect_device()
@@ -191,8 +197,26 @@ def load_model(load_denoiser: bool = False):
     )
     t0 = time.perf_counter()
 
+    model_id_or_path = "openbmb/VoxCPM2"
+
+    # Runtime-only stability override for Apple Silicon:
+    # load from a local snapshot and force config dtype to float32 on MPS.
+    if device == "mps":
+        local_path = snapshot_download(repo_id="openbmb/VoxCPM2")
+        config_path = Path(local_path) / "config.json"
+        cfg = json.loads(config_path.read_text(encoding="utf-8"))
+        current_dtype = str(cfg.get("dtype", "")).lower()
+        if current_dtype in {"bfloat16", "bf16"}:
+            cfg["dtype"] = "float32"
+            config_path.write_text(
+                json.dumps(cfg, ensure_ascii=False, indent=2) + "\n",
+                encoding="utf-8",
+            )
+            print("MPS detected: forcing dtype=float32 via local model config")
+        model_id_or_path = local_path
+
     model = VoxCPM.from_pretrained(
-        "openbmb/VoxCPM2",
+        model_id_or_path,
         optimize=optimize,
         load_denoiser=load_denoiser,
     )
@@ -315,13 +339,13 @@ def demo_voice_design(
         {
             "description": "Happy British female voice, expressive and clear, urban London accent",
             "text": text
-            or "Welcome to The Punters' Club on Radio Waters. Get your disco shoulders ready.",
+            or "How much wood would a woodchuck chuck if a woodchuck could chuck wood?",
         },
         {
             "description": "Excited English male voice, urban British Midlands Accent",
             "text": text
-            or "Filling your ears and moving your legs. You're in the Punters' Club, on Radio Waters",
-        },
+            or "Once I was afraid, I was petrified, kept thinking I could never live without you by my side.",
+        }
     ]
 
     results = []
