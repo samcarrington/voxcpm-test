@@ -22,6 +22,7 @@ Usage:
 """
 
 import argparse
+import json
 import os
 import sys
 import time
@@ -72,8 +73,8 @@ def demo_voice_design(
         {
             "description": "Excited deep English male voice, Working-class British Midlands accent",
             "text": text
-            or "Filling your ears and moving your legs. You're in the Punters' Club, on Radio Waters",
-        },
+            or "Once I was afraid, I was petrified, kept thinking I could never live without you by my side.",
+        }
     ]
 
     results = []
