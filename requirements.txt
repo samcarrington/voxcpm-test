@@ -3,5 +3,6 @@ soundfile
 numpy
 fastapi
 uvicorn[standard]
+websockets
 python-multipart
 pydantic
