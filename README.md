@@ -86,3 +86,28 @@ Example stability-focused run:
 - `VoxCPM.from_pretrained(...)` does **not** take a `device=` argument in this version.
 - On Apple Silicon, VoxCPM2 auto-selects **MPS** internally when CUDA is unavailable.
 - First run may be slow due to model download + warmup.
+
+## Web UI
+
+Local-only FastAPI server for interactive generation.
+
+```bash
+.venv/Scripts/python webapp.py --port 8000
+# Open http://127.0.0.1:8000
+```
+
+Supports voice design, voice cloning (upload reference), and live streaming playback.
+
+### API endpoints
+
+- GET  /api/status
+- GET  /api/info
+- POST /api/generate
+- WS   /api/generate/stream
+- GET  /api/outputs
+- GET  /api/uploads
+- POST /api/uploads
+
+### Constraints
+
+Single user, localhost-only (binds 127.0.0.1). Reference uploads saved to `uploads/` (gitignored).
