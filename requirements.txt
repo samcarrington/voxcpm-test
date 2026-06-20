@@ -1,3 +1,7 @@
 voxcpm
 soundfile
 numpy
+fastapi
+uvicorn[standard]
+python-multipart
+pydantic

@@ -26,9 +26,13 @@ dist/
 # Generated outputs
 output/
 
+# Web uploads / reference audio
+uploads/
+
 # Editor/IDE
 .vscode/
 .idea/
+.weave/
 
 # OS files
 .DS_Store
