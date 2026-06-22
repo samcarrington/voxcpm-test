@@ -878,7 +878,7 @@ pip install voxcpm
 ### Key Parameters
 
 | Parameter | Value |
-|---|---|
+| --- | --- |
 | LM Token Rate | 6.25 Hz |
 | Max Sequence Length | 8192 tokens |
 | Data Type | bfloat16 |
@@ -888,7 +888,7 @@ pip install voxcpm
 ### Model Versions Comparison
 
 | Aspect | VoxCPM2 | VoxCPM1.5 | VoxCPM-0.5B |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | Backbone | 2B (MiniCPM-4) | 0.6B | 0.5B |
 | Output Rate | 48 kHz | 44.1 kHz | 16 kHz |
 | Languages | 30 | 2 (zh, en) | 2 (zh, en) |
