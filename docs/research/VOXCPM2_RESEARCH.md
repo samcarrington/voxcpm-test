@@ -125,7 +125,7 @@ safetensors             # Safe tensor serialization
 
 ### Optional Dependencies
 
-```py
+```python
 dev = [
     "pytest>=6.0",
     "pytest-cov>=2.0",
