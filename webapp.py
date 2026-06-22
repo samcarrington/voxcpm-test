@@ -28,6 +28,7 @@ from core import (
 DEFAULT_PORT = 8000
 HOST = "127.0.0.1"
 MAX_UPLOAD_BYTES = 25 * 1024 * 1024
+CHUNK_ALIGNMENT = 4096
 
 logger = logging.getLogger("voxcpm.webapp")
 logging.basicConfig(
@@ -136,7 +137,12 @@ async def api_generate_stream(ws: WebSocket):
         )
 
         sample_rate = model.tts_model.sample_rate
-        await ws.send_json({"type": "meta", "sample_rate": sample_rate, "channels": 1})
+        await ws.send_json({
+            "type": "meta",
+            "sample_rate": sample_rate,
+            "channels": 1,
+            "chunk_alignment": CHUNK_ALIGNMENT,
+        })
 
         t0 = _time.perf_counter()
         chunks: list[np.ndarray] = []
@@ -144,11 +150,22 @@ async def api_generate_stream(ws: WebSocket):
         async with model_state.lock:
             async for chunk in streaming_adapter(model, kwargs):
                 chunks.append(chunk)
-                raw = chunk.astype(np.float32).tobytes()
+                original_samples = len(chunk)
+                remainder = original_samples % CHUNK_ALIGNMENT
+                if remainder:
+                    padded = np.pad(
+                        chunk,
+                        (0, CHUNK_ALIGNMENT - remainder),
+                        mode="constant",
+                        constant_values=0,
+                    )
+                else:
+                    padded = chunk
+                raw = padded.astype(np.float32).tobytes()
                 await ws.send_bytes(raw)
                 await ws.send_json({
                     "type": "progress",
-                    "chunk_samples": len(chunk),
+                    "chunk_samples": original_samples,
                     "total_samples_so_far": sum(len(c) for c in chunks),
                 })
 

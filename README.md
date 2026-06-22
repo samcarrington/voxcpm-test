@@ -3,6 +3,7 @@
 Small test app for trying **VoxCPM2** (`openbmb/VoxCPM2`) from Hugging Face.
 
 It demonstrates:
+
 - Voice design (text + style control)
 - Voice cloning (reference audio)
 - Streaming generation
