@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>VoxCPM2 TTS</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div id="status" aria-live="polite" role="status">Connecting...</div>
+
+    <form id="generate-form">
+        <fieldset>
+            <legend>Text &amp; Voice</legend>
+
+            <label for="text">Text <span style="color:var(--err);font-weight:700;margin-left:0.2rem">*</span></label>
+            <textarea id="text" name="text" required placeholder="Enter text to synthesize..." aria-required="true"></textarea>
+
+            <label for="voice_description">Voice description <span style="color:var(--ink-dim);font-weight:400;font-size:0.9em">(optional)</span></label>
+            <input type="text" id="voice_description" name="voice_description" placeholder="e.g., warm female voice with slight rasp">
+        </fieldset>
+
+        <fieldset>
+            <legend>Reference Audio</legend>
+
+            <label id="ref-label">
+                Upload reference WAV
+                <input type="file" id="reference_upload" name="reference_upload" accept=".wav,.flac,.mp3,.m4a,.ogg" aria-labelledby="ref-label">
+            </label>
+            <div id="selected-reference" aria-live="polite" style="display:none;"></div>
+        </fieldset>
+
+        <fieldset>
+            <legend>Settings</legend>
+
+            <label for="cfg_value">
+                CFG Scale
+                <span id="cfg_value_display">2.0</span>
+            </label>
+            <input type="range" id="cfg_value" name="cfg_value" min="1.0" max="3.0" step="0.1" value="2.0"
+                   aria-valuemin="1.0" aria-valuemax="3.0" aria-valuenow="2.0" aria-valuetext="2.0">
+
+            <label for="inference_timesteps">
+                Inference steps
+                <input type="number" id="inference_timesteps" name="inference_timesteps" min="1" max="50" value="20"
+                       aria-describedby="steps-hint" style="width:90px;float:right;margin:0;">
+            </label>
+            <span id="steps-hint" style="display:none;">Number of diffusion steps (12 for streaming, 20 for final)</span>
+
+            <label>
+                <input type="checkbox" id="normalize" name="normalize" checked> Normalize text
+            </label>
+
+            <label for="attempts">
+                Attempts
+                <input type="number" id="attempts" name="attempts" min="1" max="10" value="2"
+                       style="width:70px;float:right;margin:0;">
+            </label>
+
+            <label for="seed">
+                Seed
+                <input type="number" id="seed" name="seed" placeholder="Random"
+                       style="width:130px;float:right;margin:0;">
+            </label>
+        </fieldset>
+
+        <div class="actions">
+            <button type="submit" id="generate-btn">Generate</button>
+            <button type="button" id="stream-btn" disabled>Generate &amp; Stream Live</button>
+        </div>
+    </form>
+
+    <div id="stream-progress" style="display:none;" aria-live="assertive"></div>
+
+    <audio id="player" controls style="display:none;" role="region" aria-label="Audio playback"></audio>
+
+    <div id="history">
+        <h3>Generated</h3>
+        <ul id="history-list" role="list"></ul>
+        <h3>Uploaded References</h3>
+        <ul id="uploads-list" role="list"></ul>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>

@@ -10,9 +10,11 @@
 ## 1. What is VoxCPM / VoxCPM2?
 
 ### Overview
+
 **VoxCPM2** is a tokenizer-free, diffusion-autoregressive Text-to-Speech (TTS) model published by **OpenBMB** (Open Big Model Community). It's a successor to VoxCPM 1.5, with significant improvements in multilingual support, voice design, and audio quality.
 
 ### Key Characteristics
+
 - **Architecture:** Tokenizer-free diffusion autoregressive model operating in latent space of AudioVAE V2
 - **Backbone:** Based on **MiniCPM-4**, with **2B parameters**
 - **Training Data:** 2M+ hours of multilingual speech
@@ -21,14 +23,16 @@
 - **Technical Report:** ArXiv 2509.24650
 
 ### Supported Languages (30 total)
+
 **Primary:** Arabic, Burmese, Chinese, Danish, Dutch, English, Finnish, French, German, Greek, Hebrew, Hindi, Indonesian, Italian, Japanese, Khmer, Korean, Lao, Malay, Norwegian, Polish, Portuguese, Russian, Spanish, Swahili, Swedish, Tagalog, Thai, Turkish, Vietnamese
 
 **Chinese Dialects:** 四川话, 粤语, 吴语, 东北话, 河南话, 陕西话, 山东话, 天津话, 闽南话 (Sichuan, Cantonese, Wu, Northeastern, Henan, Shaanxi, Shandong, Tianjin, Hokkien)
 
 ### OpenBMB Organization
+
 - **Type:** Open-source AI research collective
-- **Repository:** https://github.com/OpenBMB
-- **Community:** Discord (https://discord.gg/KZUx7tVNwz) and Feishu (internal)
+- **Repository:** <https://github.com/OpenBMB>
+- **Community:** Discord (<https://discord.gg/KZUx7tVNwz>) and Feishu (internal)
 - **Maintained by:** a710128 (primary maintainer on PyPI)
 
 ---
@@ -36,14 +40,16 @@
 ## 2. Installation Instructions
 
 ### PyPI Installation (Recommended)
+
 ```bash
 pip install voxcpm
 ```
 
 **Current Version:** 2.0.2 (released April 8, 2026)  
-**PyPI Page:** https://pypi.org/project/voxcpm/
+**PyPI Page:** <https://pypi.org/project/voxcpm/>
 
 ### From Source (for development/web demo)
+
 ```bash
 git clone https://github.com/OpenBMB/VoxCPM.git
 cd VoxCPM
@@ -51,6 +57,7 @@ pip install -e .
 ```
 
 ### Alternative Installation via uv
+
 ```bash
 # From PyPI
 uv pip install voxcpm
@@ -62,12 +69,14 @@ uv sync
 ```
 
 ### ModelScope Mirror (for regions with HuggingFace access issues)
+
 ```bash
 pip install modelscope
 export HF_ENDPOINT=https://hf-mirror.com
 ```
 
 ### Verify Installation
+
 ```bash
 python -c "from voxcpm import VoxCPM; print('VoxCPM is ready')"
 ```
@@ -77,6 +86,7 @@ python -c "from voxcpm import VoxCPM; print('VoxCPM is ready')"
 ## 3. Dependencies
 
 ### Core Requirements
+
 | Dependency | Version | Purpose |
 |---|---|---|
 | **Python** | ≥3.10, <3.13 | Runtime (3.10–3.11 most tested) |
@@ -86,7 +96,8 @@ python -c "from voxcpm import VoxCPM; print('VoxCPM is ready')"
 | **CUDA** | ≥12.0 (optional) | GPU acceleration (NVIDIA) |
 
 ### Full Dependency List
-```
+
+```yamlIf 
 torch>=2.5.0
 torchaudio>=2.5.0
 torchcodec
@@ -113,7 +124,8 @@ safetensors             # Safe tensor serialization
 ```
 
 ### Optional Dependencies
-```
+
+```python
 dev = [
     "pytest>=6.0",
     "pytest-cov>=2.0",
@@ -124,7 +136,9 @@ dev = [
 ```
 
 ### Optional: ZipEnhancer Denoiser
+
 For high-quality voice cloning with noisy reference audio:
+
 - **Model ID:** `iic/speech_zipenhancer_ans_multiloss_16k_base` (from ModelScope)
 - **Purpose:** Denoises prompt/reference audio (16kHz pipeline)
 - **Status:** Auto-loaded by default unless `load_denoiser=False` or `enable_denoiser=False`
@@ -138,6 +152,7 @@ For high-quality voice cloning with noisy reference audio:
 #### Class: `VoxCPM`
 
 ##### Initialization
+
 ```python
 from voxcpm import VoxCPM
 
@@ -158,6 +173,7 @@ model = VoxCPM(
 ```
 
 **Parameters:**
+
 - `hf_model_id` (str): HuggingFace repo ID (default: `"openbmb/VoxCPM2"`)
 - `load_denoiser` (bool): Load ZipEnhancer denoiser (default: `True`)
 - `zipenhancer_model_id` (str): Custom denoiser path (default: `iic/speech_zipenhancer_ans_multiloss_16k_base`)
@@ -169,6 +185,7 @@ model = VoxCPM(
 - `lora_weights_path` (str|None): Path to LoRA weights
 
 ##### Core Method: `generate()`
+
 ```python
 wav = model.generate(
     text="VoxCPM2 is a powerful TTS model.",
@@ -203,10 +220,12 @@ wav = model.generate(
 | `denoise` | bool | Denoise reference audio with ZipEnhancer. Useful for noisy input |
 
 **Return:**
+
 - `numpy.ndarray` (float32, 1-D) with shape `(num_samples,)`
 - Access sample rate: `model.tts_model.sample_rate` (48000 Hz)
 
 ##### Streaming Method: `generate_streaming()`
+
 ```python
 import numpy as np
 import soundfile as sf
@@ -228,6 +247,7 @@ sf.write("output.wav", wav, model.tts_model.sample_rate)
 **Returns:** Generator yielding numpy arrays (audio chunks in float32)
 
 ##### LoRA Methods (for fine-tuned models)
+
 ```python
 # Load LoRA weights
 loaded_keys, skipped_keys = model.load_lora(
@@ -254,6 +274,7 @@ if model.lora_enabled:
 ### Usage Examples by Generation Mode
 
 #### Mode 1: Voice Design (No Reference Audio)
+
 ```python
 from voxcpm import VoxCPM
 import soundfile as sf
@@ -270,11 +291,13 @@ sf.write("voice_design.wav", wav, model.tts_model.sample_rate)
 ```
 
 **Voice description examples:**
+
 - English: `"(young male, excited and energetic)..."`
 - Chinese: `"(年轻女性，温柔甜美)..."` or `"(warm female voice)..."`
 - Mixed: Supported in both languages
 
 #### Mode 2: Controllable Voice Cloning (Reference Audio Only)
+
 ```python
 # Clone voice from reference, control with style instruction
 wav = model.generate(
@@ -287,12 +310,14 @@ sf.write("controllable_clone.wav", wav, model.tts_model.sample_rate)
 ```
 
 **Audio requirements:**
+
 - Duration: 5–30 seconds (practical range)
 - Format: WAV, FLAC, MP3 (any torchaudio-supported format)
 - Quality: Cleaner audio = better timbre preservation
 - Language: Any of 30 supported languages
 
 #### Mode 3: Ultimate/Hi-Fi Cloning (Prompt + Reference + Transcript)
+
 ```python
 # Maximum fidelity: provide reference audio AND its exact transcript
 wav = model.generate(
@@ -307,6 +332,7 @@ sf.write("hifi_clone.wav", wav, model.tts_model.sample_rate)
 ```
 
 **Best practices:**
+
 - `prompt_text` must match reference audio **exactly**
 - Use ASR (Automatic Speech Recognition) to extract transcript
 - Web demo includes built-in ASR (SenseVoice-Small)
@@ -316,6 +342,7 @@ sf.write("hifi_clone.wav", wav, model.tts_model.sample_rate)
 ### Command-Line Interface (CLI)
 
 #### Installation
+
 ```bash
 # CLI is auto-installed with voxcpm package
 voxcpm --help
@@ -324,6 +351,7 @@ voxcpm --help
 #### Subcommands
 
 ##### `voxcpm design` — Voice Design & Style Control
+
 ```bash
 # Basic text-to-speech
 voxcpm design --text "Hello world" --output out.wav
@@ -343,6 +371,7 @@ voxcpm design \
 ```
 
 ##### `voxcpm clone` — Voice Cloning
+
 ```bash
 # Simple reference cloning (VoxCPM2)
 voxcpm clone \
@@ -367,6 +396,7 @@ voxcpm clone \
 ```
 
 ##### `voxcpm batch` — Batch Processing
+
 ```bash
 # Process multiple texts from file
 voxcpm batch \
@@ -382,7 +412,8 @@ voxcpm batch \
 ```
 
 #### Common CLI Arguments
-```
+
+```plaintext
 Generation:
   --text, -t TEXT              Text to synthesize (required)
   --control INSTRUCTION        Voice description (e.g., "warm female")
@@ -420,6 +451,7 @@ LoRA:
 ### Web Demo
 
 #### Local Setup
+
 ```bash
 # Clone the repository (needed for web demo)
 git clone https://github.com/OpenBMB/VoxCPM.git
@@ -431,6 +463,7 @@ python app.py --port 8808
 ```
 
 **Features:**
+
 - Interactive text-to-speech
 - Voice design with real-time preview
 - Voice cloning with reference audio upload
@@ -446,12 +479,13 @@ python app.py --port 8808
 #### Three Cloning Modes
 
 | Mode | Reference Audio | Transcript | Fidelity | Use Case |
-|---|---|---|---|---|
+| --- | --- | --- | --- | --- |
 | **Reference Only** | ✅ | ❌ | High | Quick cloning (VoxCPM2 only) |
 | **Controllable** | ✅ | ❌ | High + Style control | Adjust emotion/pace while preserving voice |
 | **Hi-Fi/Continuation** | ✅ | ✅ | Highest | Seamless audio continuation, maximum similarity |
 
 #### Reference Audio Specifications
+
 - **Duration:** 5–30 seconds (optimal range)
 - **Format:** WAV, FLAC, MP3, or any torchaudio-supported format
 - **Sample Rate:** Input can be any rate (automatically handled)
@@ -460,6 +494,7 @@ python app.py --port 8808
 - **Content:** Can be speech or singing (model generalizes)
 
 #### Advanced: Denoising
+
 ```python
 # For noisy reference audio, enable denoiser
 wav = model.generate(
@@ -474,6 +509,7 @@ wav = model.generate(
 ### Audio Output Specifications
 
 #### Output Format
+
 - **Codec:** Raw PCM (float32, 1-D numpy array)
 - **Sample Rate:** **48 kHz** (studio quality)
 - **Channels:** Mono
@@ -481,6 +517,7 @@ wav = model.generate(
 - **Duration:** Variable (depends on text length and model)
 
 #### Saving Audio
+
 ```python
 import soundfile as sf
 
@@ -496,6 +533,7 @@ sf.write("output.mp3", wav, model.tts_model.sample_rate)
 ```
 
 #### AudioVAE V2 (Upsampling)
+
 - VoxCPM2 accepts **16kHz reference audio** and outputs **48kHz**
 - Built-in **asymmetric encode/decode** with super-resolution
 - **No external upsampler needed** (unlike some competitors)
@@ -516,8 +554,8 @@ sf.write("output.mp3", wav, model.tts_model.sample_rate)
 
 ### GPU Performance (RTX 4090 Benchmark)
 
-| Model | RTF (Real-Time Factor) | VRAM | Standard | Nano-VLLM |
-|---|---|---|---|---|
+| Model | RTF (Real-Time Facor) | VRAM | Standard | Nano-VLLM |
+| --- | --- | --- | --- | --- |
 | VoxCPM2 | ~0.30 | ~8 GB | ✅ | ~0.13 |
 | VoxCPM1.5 | ~0.15 | ~6 GB | ✅ | ~0.08 |
 | VoxCPM-0.5B | ~0.17 | ~5 GB | ✅ | ~0.10 |
@@ -527,24 +565,28 @@ sf.write("output.mp3", wav, model.tts_model.sample_rate)
 ### Device-Specific Notes
 
 #### NVIDIA CUDA
+
 ```python
 model = VoxCPM.from_pretrained("openbmb/VoxCPM2", device="cuda")
 # Requires: CUDA 12.0+, PyTorch 2.5.0+
 ```
 
 #### Apple Silicon (MPS)
+
 ```python
 model = VoxCPM.from_pretrained("openbmb/VoxCPM2", device="mps", optimize=False)
 # Note: torch.compile may have issues; use optimize=False
 ```
 
 #### CPU-Only
+
 ```python
 model = VoxCPM.from_pretrained("openbmb/VoxCPM2", device="cpu", optimize=False)
 # Much slower; torch.compile not recommended
 ```
 
 #### Multi-GPU
+
 ```python
 # Single GPU
 model = VoxCPM.from_pretrained("openbmb/VoxCPM2", device="cuda:0")
@@ -556,6 +598,7 @@ model = VoxCPM.from_pretrained("openbmb/VoxCPM2", device="cuda:1")
 ### Production Deployment (Nano-VLLM)
 
 For high-throughput serving with concurrent requests:
+
 ```bash
 pip install nano-vllm-voxcpm
 ```
@@ -571,16 +614,18 @@ server.stop()
 ```
 
 **Benefits:**
+
 - **RTF ~0.13** on RTX 4090 (vs ~0.3 standard)
 - Batched concurrent request support
 - FastAPI HTTP server integration
-- See: https://github.com/a710128/nanovllm-voxcpm
+- See: <https://github.com/a710128/nanovllm-voxcpm>
 
 ---
 
 ## 7. Example Code & Notebooks
 
 ### Basic Text-to-Speech
+
 ```python
 from voxcpm import VoxCPM
 import soundfile as sf
@@ -595,6 +640,7 @@ sf.write("demo.wav", wav, model.tts_model.sample_rate)
 ```
 
 ### Voice Design Example
+
 ```python
 # Generate unique voices from natural-language descriptions
 descriptions = [
@@ -613,6 +659,7 @@ for i, desc in enumerate(descriptions):
 ```
 
 ### Voice Cloning with Style Control
+
 ```python
 # Clone a speaker's voice and modify emotional delivery
 reference_audio = "original_speaker.wav"
@@ -635,6 +682,7 @@ for i, style in enumerate(styles):
 ```
 
 ### Batch Processing
+
 ```python
 import numpy as np
 
@@ -661,6 +709,7 @@ sf.write("full_audio.wav", full_audio, model.tts_model.sample_rate)
 ```
 
 ### Streaming Generation
+
 ```python
 import numpy as np
 
@@ -677,6 +726,7 @@ sf.write("streaming_output.wav", wav, model.tts_model.sample_rate)
 ```
 
 ### Multilingual Example
+
 ```python
 # VoxCPM2 supports 30 languages without language tags
 
@@ -694,6 +744,7 @@ for lang, text in examples.items():
 ```
 
 ### With Text Normalization
+
 ```python
 # Enable automatic text expansion (numbers, dates, etc.)
 wav = model.generate(
@@ -709,16 +760,19 @@ wav = model.generate(
 ### ⚠️ **Important Limitations**
 
 #### 1. Voice Design Variance
+
 - Results may vary between runs; recommended to generate 1–3 times to find desired output
 - Performance varies across languages based on training data availability
 
 #### 2. Long-Form Content Issues
+
 - Very long text (>4096 tokens) can cause:
   - Gradual speed-up or buzzing artifacts
   - Out-of-memory errors from KV cache growth
   - Generations that never stop
 
 **Solution:** Split into shorter segments and concatenate:
+
 ```python
 import numpy as np
 segments = text.split(". ")
@@ -730,23 +784,28 @@ full_wav = np.concatenate(all_wavs)
 ```
 
 #### 3. Short Text Generation
+
 - Very short inputs (`"Hello"`, `"好的"`) may sound weak
 - Model trained with minimum ~1 second audio
 - Better stability with naturally longer inputs
 
 #### 4. Reference Audio Transcript Mismatches (VoxCPM1.5)
+
 - If using `prompt_wav_path` + `prompt_text`, transcript **must match exactly**
 - Mismatches cause leading/trailing artifacts
 - VoxCPM2's reference-only mode avoids this entirely
 
 #### 5. Dialect Handling
+
 - Write dialect content in **native dialect vocabulary**, not standard Mandarin
 - ❌ Wrong: `(粤语)伙计，麻烦来一个A餐` (standard Mandarin with Cantonese tag)
 - ✅ Correct: `(粤语)伙計，唔該一個A餐` (actual Cantonese expressions)
 
 #### 6. torch.compile Incompatibility
+
 - Apple Silicon (MPS) and CPU may have issues with `torch.compile`
 - **Solution:** Use `optimize=False`
+
 ```python
 model = VoxCPM.from_pretrained(
     "openbmb/VoxCPM2",
@@ -756,23 +815,28 @@ model = VoxCPM.from_pretrained(
 ```
 
 #### 7. Denoiser Side Effects
+
 - ZipEnhancer denoiser (16kHz pipeline) can slightly alter voice characteristics
 - If cloning quality drops, try `denoise=False`
 
 #### 8. CFG Value Trade-offs
+
 - **High CFG (2.5–3.0):** Better text adherence but risk of artifacts on difficult inputs
 - **Low CFG (1.0–1.5):** More natural but may drift from source text
 - Long-form audio often more stable at CFG 1.5–1.6
 
 #### 9. HuggingFace Access Issues
+
 - Some regions block HuggingFace directly
 - **Solution:**
+
 ```bash
 export HF_ENDPOINT=https://hf-mirror.com
 pip install voxcpm
 ```
 
 #### 10. VRAM Constraints
+
 - VoxCPM2 requires ~8 GB VRAM
 - Lower-tier GPUs should use VoxCPM-0.5B (~5 GB) or VoxCPM1.5 (~6 GB)
 - CPU inference possible but very slow (RTF >> 1.0)
@@ -780,12 +844,14 @@ pip install voxcpm
 ### ⚠️ **Ethical & Legal Constraints**
 
 **Strictly forbidden uses:**
+
 - Impersonation of real people
 - Fraud or deception
 - Disinformation / deepfakes
 - Unlicensed commercial voice cloning
 
 **Required practice:**
+
 - Clearly label AI-generated content
 - Obtain explicit consent for voice cloning
 - Comply with local regulations (GDPR, CCPA, etc.)
@@ -804,11 +870,13 @@ pip install voxcpm
 - **LocDiT (Location-aware Diffusion Transformer):** Diffusion-based decoder generating continuous audio in latent space
 
 ### AudioVAE V2
+
 - **Asymmetric encode/decode:** Encodes at 16kHz, decodes at 48kHz (built-in super-resolution)
 - **Latent space:** Operates in compressed audio representation, avoiding discrete tokenization
 - **Efficiency:** 16→48kHz upsampling without external models
 
 ### Key Parameters
+
 | Parameter | Value |
 |---|---|
 | LM Token Rate | 6.25 Hz |
@@ -834,22 +902,25 @@ pip install voxcpm
 ## 10. Resources & Links
 
 ### Official Resources
-- **GitHub Repository:** https://github.com/OpenBMB/VoxCPM
-- **HuggingFace Model Card:** https://huggingface.co/openbmb/VoxCPM2
-- **ModelScope Mirror:** https://modelscope.cn/models/OpenBMB/VoxCPM2
-- **Live Demo:** https://huggingface.co/spaces/OpenBMB/VoxCPM-Demo
-- **Audio Samples:** https://openbmb.github.io/voxcpm2-demopage
-- **Documentation:** https://voxcpm.readthedocs.io/en/latest/
-- **Technical Report:** https://arxiv.org/abs/2509.24650
-- **Discord Community:** https://discord.gg/KZUx7tVNwz
+
+- **GitHub Repository:** <https://github.com/OpenBMB/VoxCPM>
+- **HuggingFace Model Card:** <https://huggingface.co/openbmb/VoxCPM2>
+- **ModelScope Mirror:** <https://modelscope.cn/models/OpenBMB/VoxCPM2>
+- **Live Demo:** <https://huggingface.co/spaces/OpenBMB/VoxCPM-Demo>
+- **Audio Samples:** <https://openbmb.github.io/voxcpm2-demopage>
+- **Documentation:** <https://voxcpm.readthedocs.io/en/latest/>
+- **Technical Report:** <https://arxiv.org/abs/2509.24650>
+- **Discord Community:** <https://discord.gg/KZUx7tVNwz>
 
 ### PyPI & Package Management
-- **PyPI Package:** https://pypi.org/project/voxcpm/
+
+- **PyPI Package:** <https://pypi.org/project/voxcpm/>
 - **Version:** 2.0.2 (April 8, 2026)
 - **Maintainer:** a710128
 
 ### Ecosystem & Deployment
-- **Nano-VLLM-VoxCPM** (Production inference): https://github.com/a710128/nanovllm-voxcpm
+
+- **Nano-VLLM-VoxCPM** (Production inference): <https://github.com/a710128/nanovllm-voxcpm>
 - **VoxCPM.cpp** (C++ implementation)
 - **VoxCPM-ONNX** (ONNX export)
 - **MLX-Audio** (Apple Silicon optimization)
@@ -858,8 +929,9 @@ pip install voxcpm
 - **TTS WebUI** (alternative web interface)
 
 ### Fine-Tuning Resources
-- **Fine-Tuning Guide:** https://voxcpm.readthedocs.io/en/latest/finetuning/finetune.html
-- **Walkthrough (LibriSpeech):** https://voxcpm.readthedocs.io/en/latest/finetuning/walkthrough.html
+
+- **Fine-Tuning Guide:** <https://voxcpm.readthedocs.io/en/latest/finetuning/finetune.html>
+- **Walkthrough (LibriSpeech):** <https://voxcpm.readthedocs.io/en/latest/finetuning/walkthrough.html>
 - **Minimum Data:** 5–10 minutes of audio
 - **Supported Methods:** Full SFT, LoRA (parameter-efficient)
 
@@ -889,8 +961,8 @@ pip install voxcpm
 ## Final Notes
 
 **Confidence Level:** Very High (95%+)  
-**Source:** Official HuggingFace model card, GitHub repository, PyPI, documentation (https://voxcpm.readthedocs.io), and technical paper
+**Source:** Official HuggingFace model card, GitHub repository, PyPI, documentation (<https://voxcpm.readthedocs.io>), and technical paper
 
 All information current as of April 2026. VoxCPM2 is actively maintained and production-ready for commercial use under Apache-2.0 license.
 
-For updated information or the latest release, visit: **https://github.com/OpenBMB/VoxCPM**
+For updated information or the latest release, visit: **<https://github.com/OpenBMB/VoxCPM>**
