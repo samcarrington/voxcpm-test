@@ -243,7 +243,7 @@
             list.innerHTML = '';
             
             const jobs = Array.isArray(data) ? data : Object.values(data);
-            jobs.sort(function(a, b) { return b.job_name.localeCompare(a.job_name); });
+            jobs.sort(function(a, b) { return (b.created_at || '').localeCompare(a.created_at || ''); });
             jobs.slice(0, 25).forEach(function(job) {
                 API.get('/api/jobs/' + job.job_name).then(function(detail) {
                     const container = document.createElement('div');
