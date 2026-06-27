@@ -410,6 +410,7 @@
 
         var player = new StreamPlayer();
         var finalUrl = null;
+        var streamSampleRate = 48000;
 
         var ws = new WebSocket('ws://' + location.host + '/api/generate/stream');
 
@@ -436,7 +437,7 @@
             if (event.data instanceof Blob) {
                 event.data.arrayBuffer().then(function(ab) {
                     var float32 = new Float32Array(ab, 0, ab.byteLength / 4);
-                    player.ensureContext(48000);
+                    player.ensureContext(streamSampleRate);
                     player.enqueueChunk(float32);
                     progressDiv.textContent = 'Streaming... chunk #' + player.receivedChunks;
                 });
@@ -445,10 +446,11 @@
 
             var msg = JSON.parse(event.data);
             if (msg.type === 'meta') {
-                player.ensureContext(msg.sample_rate);
+                streamSampleRate = msg.sample_rate || streamSampleRate;
+                player.ensureContext(streamSampleRate);
             } else if (msg.type === 'progress') {
                 progressDiv.textContent = 'Chunk ' + player.receivedChunks + ' — ' +
-                    (msg.chunk_samples / 48000).toFixed(2) + 's';
+                    (msg.chunk_samples / (player.audioCtx ? player.audioCtx.sampleRate : streamSampleRate)).toFixed(2) + 's';
             } else if (msg.type === 'saved') {
                 finalUrl = msg.url;
             } else if (msg.type === 'done') {
