@@ -727,7 +727,14 @@ class LazyOptionalEngine(BaseTTSEngine):
     def __init__(self, engine_id: str, display_name: str, capabilities: EngineCapabilities, module_name: str):
         installed = module_is_installed(module_name)
         hint = None if installed else f"Install optional dependency for {display_name}"
-        super().__init__(engine_id, display_name, capabilities, installed=False, install_hint=hint or f"Adapter for {display_name} is not implemented yet", state="not_installed")
+        super().__init__(
+            engine_id,
+            display_name,
+            capabilities,
+            installed=installed,
+            install_hint=hint,
+            state="unloaded" if installed else "not_installed",
+        )
 
     async def generate(self, req: EngineRequest, job_name: str) -> EngineResult:
         note = [f"{self.display_name} adapter is not implemented."]
@@ -835,12 +842,12 @@ class NeuTTSEngine(BaseTTSEngine):
             t0 = time.perf_counter()
 
             def _generate():
-                if req.reference_wav_path:
-                    if not req.reference_text:
-                        raise ValueError("NeuTTS Nano requires reference text for cloning")
-                    ref_codes = tts.encode_reference(req.reference_wav_path)
-                    return np.asarray(tts.infer(req.text, ref_codes, req.reference_text))
-                return np.asarray(tts.infer(req.text))
+                if not req.reference_wav_path:
+                    raise ValueError("NeuTTS Nano requires reference audio for generation")
+                if not req.reference_text:
+                    raise ValueError("NeuTTS Nano requires reference text for cloning")
+                ref_codes = tts.encode_reference(req.reference_wav_path)
+                return np.asarray(tts.infer(req.text, ref_codes, req.reference_text))
 
             wav = await asyncio.to_thread(_generate)
             sample_rate = 24000
@@ -887,7 +894,7 @@ class EngineManager:
 
 
 def create_default_job_name() -> str:
-    return f"job-{timestamp_slug()}"
+    return f"job-{datetime.now().strftime('%Y%m%d-%H%M%S-%f')}"
 
 
 def job_path(job_name: str) -> Path:

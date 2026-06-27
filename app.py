@@ -62,6 +62,8 @@ def validate_cli(args, manager: EngineManager):
         raise SystemExit(f"Error: {engine.display_name} does not support cloning")
     if args.stream and not engine.capabilities.supports_streaming:
         raise SystemExit(f"Error: {engine.display_name} does not support streaming")
+    if not args.clone and not args.stream and not engine.capabilities.supports_plain_tts:
+        raise SystemExit(f"Error: {engine.display_name} requires --clone with --reference and --reference-text")
     if args.clone and engine.capabilities.requires_reference_text and not args.reference_text:
         raise SystemExit(f"Error: {engine.display_name} requires --reference-text for cloning")
     if args.clone and not args.reference:
@@ -83,8 +85,8 @@ def main():
         engine = manager.get(normalize_engine_id(args.engine))
         request = EngineRequest(
             text=args.text or "Hello",
-            reference_wav_path=args.reference,
-            reference_text=args.reference_text,
+            reference_wav_path=args.reference if args.clone else None,
+            reference_text=args.reference_text if args.clone else None,
             cfg_value=args.cfg,
             inference_timesteps=args.steps,
             normalize=not args.no_normalize,

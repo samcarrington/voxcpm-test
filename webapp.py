@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Any
 from fastapi import HTTPException
 
-from fastapi import FastAPI, UploadFile, File, WebSocket
+from fastapi import FastAPI, UploadFile, File, WebSocket, WebSocketDisconnect
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 
@@ -107,6 +107,9 @@ async def api_generate_stream(ws: WebSocket):
     await ws.accept()
     try:
         msg = await ws.receive_json()
+        if msg.get("type") != "start":
+            await ws.send_json({"type": "error", "message": "expected start"})
+            return
         payload = msg.get("params", {})
         params = GenerationParams(**payload)
         engine_id = normalize_engine_id(payload.get("engine_id", msg.get("engine_id", "voxcpm")))
@@ -144,10 +147,19 @@ async def api_generate_stream(ws: WebSocket):
         path = await asyncio.to_thread(save_wav, wav, "stream.wav", model.tts_model.sample_rate)
         await ws.send_json({"type": "saved", "url": f"/outputs/{path.name}", "file": path.name})
         await ws.send_json({"type": "done", "elapsed_s": time.perf_counter() - t0})
+    except WebSocketDisconnect:
+        return
     except Exception:
         logger.exception("stream failed")
-        await ws.send_json({"type": "error", "message": "Streaming failed"})
-    await ws.close()
+        try:
+            await ws.send_json({"type": "error", "message": "Streaming failed"})
+        except Exception:
+            pass
+    finally:
+        try:
+            await ws.close()
+        except Exception:
+            pass
 
 ensure_output_dir(); ensure_upload_dir()
 app.mount("/outputs", StaticFiles(directory=str(OUTPUT_DIR)), name="outputs")
