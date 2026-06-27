@@ -20,6 +20,33 @@ python3.12 -m venv .venv
 .venv/bin/pip install -r requirements.txt
 ```
 
+### Optional TTS engines
+
+VoxCPM2 is installed by `requirements.txt`. Extra engines are optional and are
+detected at runtime by the web UI and CLI.
+
+```bash
+# Kokoro preset-voice TTS
+.venv/bin/pip install kokoro
+# macOS: brew install espeak-ng
+
+# Supertonic preset-voice TTS
+.venv/bin/pip install supertonic
+
+# NeuTTS Nano voice cloning
+.venv/bin/pip install neutts
+# Optional streaming/backend extras, if needed later:
+# .venv/bin/pip install "neutts[all]" "neutts[llama]" pyaudio
+```
+
+Notes:
+
+- Optional engines are not required for the app to start.
+- Missing engines appear as `not_installed` in the web UI engine bar.
+- Kokoro may need the system `espeak-ng` package for phonemizer/G2P support.
+- NeuTTS clone mode requires both `--reference` audio and `--reference-text`.
+- Supertonic and Kokoro do not support reference-audio cloning in this app.
+
 ## Quick start
 
 Show environment info:
@@ -51,6 +78,22 @@ Streaming demo:
 ```bash
 .venv/bin/python app.py --stream --text "Streaming synthesis test."
 ```
+
+Select a runtime engine for CLI generation:
+
+```bash
+.venv/bin/python app.py --engine voxcpm --text "Hello from VoxCPM."
+.venv/bin/python app.py --engine kokoro --text "Hello from Kokoro."
+.venv/bin/python app.py --engine supertonic --text "Hello from Supertonic."
+.venv/bin/python app.py --engine neutts --clone \
+  --reference speaker.wav \
+  --reference-text "Exact transcript of the reference audio" \
+  --text "This is a NeuTTS clone test."
+```
+
+The CLI is single-engine only. It fails before model load when a selected engine
+does not support the requested mode, for example Kokoro cloning or Supertonic
+streaming.
 
 Outputs are written to `output/`.
 
@@ -102,6 +145,10 @@ Supports voice design, voice cloning (upload reference), and live streaming play
 
 - GET  /api/status
 - GET  /api/info
+- GET  /api/engines
+- GET  /api/jobs
+- GET  /api/jobs/{job_name}
+- POST /api/jobs
 - POST /api/generate
 - WS   /api/generate/stream
 - GET  /api/outputs

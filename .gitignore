@@ -25,6 +25,7 @@ dist/
 
 # Generated outputs
 output/
+jobs/
 
 # Web uploads / reference audio
 uploads/
@@ -33,6 +34,10 @@ uploads/
 .vscode/
 .idea/
 .weave/
+.slim/deepwork/
 
 # OS files
 .DS_Store
+
+# Node
+node_modules/

@@ -51,6 +51,64 @@ body {
     transition: border-color var(--transition), background var(--transition);
 }
 
+/* ── Engines Bar ── */
+.engines-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 1rem;
+    padding: 0.5rem;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+}
+
+.engine-toggle {
+    display: flex;
+    flex-direction: column;
+    padding: 0.5rem 0.75rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    background: var(--bg);
+    cursor: pointer;
+    transition: all var(--transition);
+    user-select: none;
+    flex: 1;
+    min-width: 120px;
+}
+
+.engine-toggle input[type="checkbox"] {
+    position: absolute;
+    opacity: 0;
+    width: 1px;
+    height: 1px;
+    margin: 0;
+    pointer-events: none;
+}
+
+.engine-toggle.selected {
+    border-color: var(--accent);
+    background: color-mix(in oklch, var(--accent) 15%, transparent);
+}
+
+.engine-toggle.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    background: color-mix(in oklch, var(--bg) 50%, #000);
+}
+
+.engine-name {
+    font-weight: 600;
+    font-size: 0.85rem;
+    color: var(--ink);
+}
+
+.engine-status {
+    font-size: 0.7rem;
+    color: var(--ink-muted);
+    margin-top: 0.2rem;
+}
+
 #status::before {
     content: '';
     display: inline-block;
@@ -314,37 +372,134 @@ audio {
     letter-spacing: -0.02em;
 }
 
-#history-list,
+/* ── Jobs ── */
+.job-card {
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--surface);
+    margin-bottom: 1rem;
+    padding: 1rem;
+}
+
+.job-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 0.75rem;
+    margin-bottom: 0.75rem;
+}
+
+.job-title {
+    font-weight: 700;
+    font-size: 0.95rem;
+    color: var(--ink);
+}
+
+.job-status {
+    font-size: 0.75rem;
+    padding: 0.2rem 0.5rem;
+    border-radius: var(--radius-sm);
+    background: var(--bg);
+    border: 1px solid var(--border);
+    text-transform: uppercase;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+}
+
+.job-status[data-status="processing"] {
+    border-color: color-mix(in oklch, var(--accent) 30%, transparent);
+    color: var(--accent);
+}
+
+.job-status[data-status="completed"] {
+    border-color: color-mix(in oklch, var(--ok) 30%, transparent);
+    color: var(--ok);
+}
+
+.job-status[data-status="failed"] {
+    border-color: color-mix(in oklch, var(--err) 30%, transparent);
+    color: var(--err);
+}
+
+.engine-result {
+    padding: 0.85rem;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    margin-bottom: 0.5rem;
+}
+
+.engine-result:last-child {
+    margin-bottom: 0;
+}
+
+.engine-result-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.85rem;
+    margin-bottom: 0.5rem;
+}
+
+.engine-result-name {
+    font-weight: 600;
+    color: var(--ink);
+}
+
+.engine-result-status {
+    font-size: 0.75rem;
+    color: var(--ink-muted);
+}
+
+.engine-result-notes {
+    font-size: 0.75rem;
+    color: var(--warn);
+    margin-bottom: 0.5rem;
+    background: color-mix(in oklch, var(--warn) 10%, transparent);
+    padding: 0.3rem 0.5rem;
+    border-radius: 4px;
+}
+
+.engine-result-meta {
+    font-size: 0.72rem;
+    color: var(--ink-dim);
+    margin-bottom: 0.45rem;
+}
+
+.engine-result-error {
+    font-size: 0.75rem;
+    color: var(--err);
+    margin-bottom: 0.5rem;
+    background: color-mix(in oklch, var(--err) 10%, transparent);
+    padding: 0.3rem 0.5rem;
+    border-radius: 4px;
+}
+
+.engine-result audio {
+    width: 100%;
+    height: 36px;
+    margin: 0.3rem 0 0;
+}
+
+#job-history-list,
 #uploads-list {
     list-style: none;
     margin: 0 0 1.8rem;
     padding: 0;
 }
 
-#history-list li,
 #uploads-list li {
     padding: 0.6rem 0.75rem;
     border-bottom: 1px solid #1a1b20;
     transition: background var(--transition);
 }
 
-#history-list li:first-child,
 #uploads-list li:first-child {
     background: color-mix(in oklch, var(--bg) 30%, var(--surface));
     border-radius: var(--radius-sm);
 }
 
-#history-list audio {
-    width: 100%;
-    height: 36px;
-    margin-bottom: 0.3rem;
-}
-#history-list audio,
-#history-list .meta {
-    width: 100%;
-}
-
-#history-list .meta,
 #uploads-list li {
     font-size: 0.78rem;
     color: var(--ink-muted);
@@ -398,7 +553,6 @@ audio {
         min-height: 44px;
     }
 
-    #history-list li,
     #uploads-list li {
         padding: 0.5rem 0.5rem;
     }
