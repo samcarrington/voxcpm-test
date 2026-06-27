@@ -820,7 +820,7 @@ class NeuTTSEngine(BaseTTSEngine):
     def __init__(self):
         installed = module_is_installed("neutts")
         hint = None if installed else "Install optional dependency: pip install neutts"
-        super().__init__("neutts-nano", "NeuTTS Nano", EngineCapabilities(supports_plain_tts=False, supports_cloning=True, requires_reference_text=True), installed=installed, install_hint=hint, state="unloaded" if installed else "not_installed")
+        super().__init__("neutts-nano", "NeuTTS Nano", EngineCapabilities(supports_plain_tts=True, supports_cloning=True, requires_reference_text=True), installed=installed, install_hint=hint, state="unloaded" if installed else "not_installed")
 
     async def generate(self, req: EngineRequest, job_name: str) -> EngineResult:
         self.load_error = None
