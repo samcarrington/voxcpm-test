@@ -65,9 +65,11 @@ async def api_jobs(params: ComparisonJobParams):
     try:
         job = await generate_comparison_job(engine_manager, params)
         return JSONResponse(job.model_dump())
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc))
     except Exception:
         logger.exception("job failed")
-        raise HTTPException(status_code=400, detail="Job rejected")
+        raise HTTPException(status_code=500, detail="Job failed")
 
 @app.get("/api/jobs")
 async def api_jobs_list(): return JSONResponse([j.model_dump() for j in list_jobs()])
