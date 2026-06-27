@@ -78,7 +78,12 @@ body {
 }
 
 .engine-toggle input[type="checkbox"] {
-    display: none;
+    position: absolute;
+    opacity: 0;
+    width: 1px;
+    height: 1px;
+    margin: 0;
+    pointer-events: none;
 }
 
 .engine-toggle.selected {
