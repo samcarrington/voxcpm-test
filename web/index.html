@@ -8,8 +8,15 @@
 </head>
 <body>
     <div id="status" aria-live="polite" role="status">Connecting...</div>
+    <div id="engines-bar" class="engines-bar" aria-label="Engine Selection" role="group"></div>
 
     <form id="generate-form">
+        <fieldset>
+            <legend>Job Settings</legend>
+            <label for="job_name">Job Name</label>
+            <input type="text" id="job_name" name="job_name" required aria-required="true">
+        </fieldset>
+
         <fieldset>
             <legend>Text &amp; Voice</legend>
 
@@ -28,6 +35,9 @@
                 <input type="file" id="reference_upload" name="reference_upload" accept=".wav,.flac,.mp3,.m4a,.ogg" aria-labelledby="ref-label">
             </label>
             <div id="selected-reference" aria-live="polite" style="display:none;"></div>
+
+            <label for="reference_text">Reference Text <span style="color:var(--ink-dim);font-weight:400;font-size:0.9em">(required for some engines)</span></label>
+            <textarea id="reference_text" name="reference_text" placeholder="Transcript of reference audio..." style="min-height:60px;"></textarea>
         </fieldset>
 
         <fieldset>
@@ -74,9 +84,12 @@
 
     <audio id="player" controls style="display:none;" role="region" aria-label="Audio playback"></audio>
 
+    <div id="active-job-container" style="display:none; margin-top:2.5rem;" aria-live="polite"></div>
+
     <div id="history">
-        <h3>Generated</h3>
-        <ul id="history-list" role="list"></ul>
+        <h3>Job History</h3>
+        <div id="job-history-list"></div>
+
         <h3>Uploaded References</h3>
         <ul id="uploads-list" role="list"></ul>
     </div>
